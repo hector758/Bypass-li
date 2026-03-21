@@ -3,41 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bypass Tool</title>
+    <title>MortyAI - Code Master 💻</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; text-align: center; }
-        input { width: 80%; padding: 10px; border-radius: 5px; border: none; margin-bottom: 10px; }
-        button { padding: 10px 20px; background: #7289da; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        #result { margin-top: 20px; word-break: break-all; color: #43b581; }
+        :root { --neon: #00ff99; --dark: #0a0a0a; --chat-bg: #151515; }
+        body { background: var(--dark); color: #eee; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { padding: 15px; text-align: center; border-bottom: 1px solid var(--neon); background: #111; z-index: 10; }
+        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .message { padding: 12px 18px; border-radius: 12px; max-width: 85%; font-size: 14px; position: relative; line-height: 1.6; }
+        .user { align-self: flex-end; background: var(--neon); color: black; font-weight: bold; box-shadow: 0 0 10px rgba(0,255,153,0.3); }
+        .ai { align-self: flex-start; background: var(--chat-bg); border: 1px solid #333; }
+        pre { background: #000 !important; padding: 15px; border-radius: 8px; position: relative; margin: 10px 0; overflow-x: auto; border: 1px solid #444; }
+        .copy-btn { position: absolute; top: 5px; right: 5px; background: var(--neon); color: black; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold; }
+        .input-area { padding: 15px; background: #111; display: flex; gap: 10px; border-top: 1px solid #333; }
+        input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; outline: none; }
+        button#send { background: var(--neon); border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h2>Bypass Linkvertise</h2>
-    <input type="text" id="linkInput" placeholder="Pega el link de Linkvertise aquí">
-    <br>
-    <button onclick="getBypass()">Saltar Enlace</button>
-    <div id="result"></div>
 
-    <script>
-        async function getBypass() {
-            const link = document.getElementById('linkInput').value;
-            const resDiv = document.getElementById('result');
-            resDiv.innerText = "Procesando...";
+<header>
+    <h2 style="margin:0; font-size: 1.1rem; letter-spacing: 1px;">MORTY<span style="color:var(--neon)">AI</span> CODER 🤖</h2>
+</header>
 
-            try {
-                // Ejemplo usando una API pública (Nota: las APIs cambian o mueren, debes buscar una activa)
-                const response = await fetch(`https://api.bypass.vip/bypass?url=${encodeURIComponent(link)}`);
-                const data = await response.json();
-                
-                if(data.destination) {
-                    resDiv.innerHTML = `<a href="${data.destination}" style="color: cyan" target="_blank">¡Click aquí para ir al destino!</a>`;
-                } else {
-                    resDiv.innerText = "Error: No se pudo obtener el link.";
-                }
-            } catch (error) {
-                resDiv.innerText = "Error de conexión con la API.";
-            }
+<div id="chat-container">
+    <div class="message ai">¡Sistemas listos! Soy MortyAI. Pídeme scripts, webs o corrección de errores. Mi cerebro corre sobre Llama 3 (Élite). 🚀</div>
+</div>
+
+<div class="input-area">
+    <input type="text" id="userInput" placeholder="Escribe tu duda de programación..." onkeypress="if(event.key === 'Enter') sendMessage()">
+    <button id="send" onclick="sendMessage()">ENVIAR</button>
+</div>
+
+<script>
+    const API_KEY = "Gsk_7ee6PgXdt0hC3IhnDzScWGdyb3FYNYMG3HMM9PLy1e5KmG7nohsM"; 
+
+    async function sendMessage() {
+        const input = document.getElementById('userInput');
+        const container = document.getElementById('chat-container');
+        const text = input.value.trim();
+        if (!text) return;
+
+        // Mostrar usuario
+        container.innerHTML += `<div class="message user">${text}</div>`;
+        input.value = "";
+        container.scrollTop = container.scrollHeight;
+
+        // Carga
+        const loadingId = "load-" + Date.now();
+        container.innerHTML += `<div class="message ai" id="${loadingId}">Procesando código maestro... ⚡</div>`;
+
+        try {
+            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "llama3-70b-8192", // El modelo más potente disponible en Groq
+                    messages: [
+                        {role: "system", content: "Eres MortyAI, un experto en programación extrema. Si el usuario pide código, dáselo completo y optimizado. Usa bloques de código con el lenguaje especificado (ej: ```html)."},
+                        {role: "user", content: text}
+                    ],
+                    temperature: 0.6
+                })
+            });
+
+            const data = await response.json();
+            let aiResponse = data.choices[0].message.content;
+            
+            // Formatear respuesta con botones de copia
+            const formattedResponse = aiResponse.replace(/```(\w+)?([\s\S]*?)```/g, (match, lang, code) => {
+                return `<pre><button class="copy-btn" onclick="copyCode(this)">COPIAR</button><code class="language-${lang || 'txt'}">${code.trim()}</code></pre>`;
+            });
+
+            document.getElementById(loadingId).innerHTML = formattedResponse;
+            
+            // Aplicar colores al código
+            document.querySelectorAll('pre code').forEach((el) => { hljs.highlightElement(el); });
+            container.scrollTop = container.scrollHeight;
+
+        } catch (error) {
+            document.getElementById(loadingId).innerText = "Error: La API está saturada o la llave es inválida.";
         }
-    </script>
+    }
+
+    function copyCode(btn) {
+        const code = btn.parentElement.querySelector('code').innerText;
+        navigator.clipboard.writeText(code);
+        btn.innerText = "¡COPIADO!";
+        setTimeout(() => { btn.innerText = "COPIAR"; }, 2000);
+    }
+</script>
+
 </body>
 </html>
